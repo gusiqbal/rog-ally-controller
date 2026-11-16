@@ -4,32 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ROG Ally Controller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* -- Reset & Base -- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   color-scheme: dark;
-  --red: #FF0032;
-  --red-dim: #CC0028;
-  --red-glow: rgba(255, 0, 50, 0.3);
-  --bg-deep: #0A0A0F;
-  --bg-card: #14141E;
-  --bg-card-hover: #1A1A28;
-  --bg-surface: #1C1C2A;
-  --bg-input: #22223A;
-  --text: #E8E8F0;
-  --text-dim: #8888A0;
-  --text-muted: #555570;
-  --border: #2A2A40;
-  --green: #00E676;
-  --yellow: #FFD600;
-  --orange: #FF9100;
-  --blue: #448AFF;
-  --cyan: #18FFFF;
+  --cyan: #00f0ff;
+  --cyan-dim: #00b8c4;
+  --cyan-glow: rgba(0, 240, 255, 0.35);
+  --cyan-subtle: rgba(0, 240, 255, 0.08);
+  --magenta: #ff00aa;
+  --magenta-glow: rgba(255, 0, 170, 0.35);
+  --magenta-subtle: rgba(255, 0, 170, 0.08);
+  --yellow: #f0ff00;
+  --yellow-glow: rgba(240, 255, 0, 0.3);
+  --green: #00ff88;
+  --green-glow: rgba(0, 255, 136, 0.3);
+  --red: #ff2244;
+  --orange: #ff6600;
+  --blue: #4488ff;
+  --bg-deep: #0a0a1a;
+  --bg-card: #0d1125;
+  --bg-card-hover: #111633;
+  --bg-surface: #10152a;
+  --bg-input: #151a35;
+  --text: #d8dce8;
+  --text-dim: #6672a0;
+  --text-muted: #3a4470;
+  --border: #1a2245;
+  --border-glow: #1e2a55;
   --nav-h: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 html, body {
   height: 100%; overflow: hidden;
@@ -44,16 +55,75 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
+/* -- Cyberpunk background texture -- */
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -2;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 240, 255, 0.012) 2px,
+      rgba(0, 240, 255, 0.012) 4px
+    ),
+    radial-gradient(ellipse at 20% 50%, rgba(0, 240, 255, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 0, 170, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* -- Animated scanline overlay -- */
+body::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  animation: scanMove 8s linear infinite;
+}
+@keyframes scanMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+/* -- Hex grid pattern on deep bg -- */
+.page-container::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1; pointer-events: none;
+  opacity: 0.025;
+  background-image:
+    linear-gradient(30deg, var(--cyan) 12%, transparent 12.5%, transparent 87%, var(--cyan) 87.5%, var(--cyan)),
+    linear-gradient(150deg, var(--cyan) 12%, transparent 12.5%, transparent 87%, var(--cyan) 87.5%, var(--cyan)),
+    linear-gradient(30deg, var(--cyan) 12%, transparent 12.5%, transparent 87%, var(--cyan) 87.5%, var(--cyan)),
+    linear-gradient(150deg, var(--cyan) 12%, transparent 12.5%, transparent 87%, var(--cyan) 87.5%, var(--cyan)),
+    linear-gradient(60deg, rgba(0,240,255,0.5) 25%, transparent 25.5%, transparent 75%, rgba(0,240,255,0.5) 75%, rgba(0,240,255,0.5)),
+    linear-gradient(60deg, rgba(0,240,255,0.5) 25%, transparent 25.5%, transparent 75%, rgba(0,240,255,0.5) 75%, rgba(0,240,255,0.5));
+  background-size: 40px 70px;
+  background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+}
+
 /* -- Scrollable page area -- */
 .page-container {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   padding: 16px 20px calc(var(--nav-h) + var(--safe-bottom) + 16px);
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
-.page { display: none; animation: fadeIn .2s ease; }
+.page { display: none; animation: glitchIn .3s ease; }
 .page.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes glitchIn {
+  0% { opacity: 0; transform: translateY(6px); filter: hue-rotate(40deg); }
+  40% { opacity: 0.7; filter: hue-rotate(-10deg); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
 
 /* -- Bottom nav -- */
 nav {
@@ -62,52 +132,85 @@ nav {
   padding-block-end: var(--safe-bottom);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  background: linear-gradient(to top, #0D0D14 60%, rgba(13,13,20,.92));
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(to top, rgba(6,6,18,0.98) 60%, rgba(6,6,18,0.85));
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-around;
+  box-shadow: 0 -2px 20px rgba(0, 240, 255, 0.06);
+}
+nav::before {
+  content: '';
+  position: absolute; top: -1px; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent);
+  opacity: 0.5;
 }
 nav button {
   background: none; border: none; color: var(--text-dim);
   display: flex; flex-direction: column; align-items: center; gap: 3px;
-  font-size: 10px; padding: 6px 12px; border-radius: 8px;
-  transition: color .15s, background .15s; cursor: pointer;
-  min-width: 56px;
+  font-size: 10px; padding: 6px 12px; border-radius: 6px;
+  transition: color .15s, background .15s, text-shadow .15s; cursor: pointer;
+  min-width: 56px; font-family: var(--font-mono);
+  letter-spacing: 0.3px;
 }
 nav button svg { width: 22px; height: 22px; }
-nav button.active { color: var(--red); }
-nav button.active svg { filter: drop-shadow(0 0 6px var(--red-glow)); }
-nav button:active { background: rgba(255,255,255,.05); }
+nav button.active {
+  color: var(--cyan);
+  text-shadow: 0 0 8px var(--cyan-glow);
+}
+nav button.active svg {
+  filter: drop-shadow(0 0 6px var(--cyan-glow));
+}
+nav button:active { background: rgba(0, 240, 255, 0.06); }
 
 /* -- Cards -- */
 .card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
-  transition: border-color .15s;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+  transition: border-color .15s, box-shadow .15s;
+  position: relative;
 }
-.card:active { border-color: var(--red); }
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgba(0, 240, 255, 0.06);
+  pointer-events: none;
+}
+.card:active {
+  border-color: var(--cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+}
 .card-title {
-  font-size: 12px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: .6px; color: var(--text-dim); margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--cyan-dim); margin-bottom: 12px;
 }
 .card-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 0;
 }
-.card-row + .card-row { border-top: 1px solid rgba(255,255,255,.04); }
+.card-row + .card-row { border-top: 1px solid rgba(0, 240, 255, 0.04); }
 
 /* -- Mode chips -- */
 .mode-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 .mode-chip {
   flex: 1; padding: 14px 8px; border-radius: var(--radius);
-  background: var(--bg-card); border: 2px solid var(--border);
+  background: var(--bg-card); border: 1px solid var(--border);
   text-align: center; cursor: pointer; transition: all .2s;
   font-size: 13px; font-weight: 600;
 }
-.mode-chip .icon { font-size: 22px; margin-bottom: 4px; }
+.mode-chip .icon {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px; width: 28px; height: 28px;
+}
+.mode-chip .icon svg { width: 24px; height: 24px; }
 .mode-chip.active {
-  border-color: var(--red); background: rgba(255,0,50,.08);
-  box-shadow: 0 0 20px var(--red-glow);
+  border-color: var(--cyan);
+  background: var(--cyan-subtle);
+  box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 12px rgba(0, 240, 255, 0.05);
+  color: var(--cyan);
 }
 .mode-chip:active { transform: scale(.96); }
 
@@ -115,29 +218,44 @@ nav button:active { background: rgba(255,255,255,.05); }
 .toggle {
   width: 48px; height: 28px; border-radius: 14px;
   background: var(--bg-input); border: 1px solid var(--border);
-  position: relative; cursor: pointer; transition: background .2s, border-color .2s;
+  position: relative; cursor: pointer;
+  transition: background .2s, border-color .2s, box-shadow .2s;
   flex-shrink: 0;
 }
-.toggle.on { background: var(--red); border-color: var(--red); }
+.toggle.on {
+  background: linear-gradient(135deg, var(--cyan-dim), var(--cyan));
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
 .toggle::after {
   content: ''; position: absolute; top: 3px; left: 3px;
   width: 20px; height: 20px; border-radius: 50%;
   background: white; transition: transform .2s;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
-.toggle.on::after { transform: translateX(20px); }
+.toggle.on::after {
+  transform: translateX(20px);
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
 
 /* -- Sliders -- */
 .slider-wrap { width: 100%; }
 .slider-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-.slider-label span:last-child { color: var(--red); font-weight: 600; font-variant-numeric: tabular-nums; }
+.slider-label span:last-child {
+  color: var(--cyan); font-weight: 600;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 6px var(--cyan-glow);
+}
 input[type=range] {
   -webkit-appearance: none; width: 100%; height: 6px;
   border-radius: 3px; background: var(--bg-input); outline: none;
 }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 24px; height: 24px;
-  border-radius: 50%; background: var(--red); cursor: pointer;
-  border: 2px solid white; box-shadow: 0 0 8px var(--red-glow);
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--cyan); cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 12px var(--cyan-glow), 0 0 4px var(--cyan);
 }
 
 /* -- Stat boxes (dashboard) -- */
@@ -145,13 +263,26 @@ input[type=range]::-webkit-slider-thumb {
 .stat-box {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.stat-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.2;
 }
 .stat-box .value {
+  font-family: var(--font-mono);
   font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  text-shadow: 0 0 10px currentColor;
 }
-.stat-box .label { font-size: 11px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
-.stat-box.red .value { color: var(--red); }
+.stat-box .label {
+  font-family: var(--font-mono);
+  font-size: 10px; color: var(--text-dim); margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+}
+.stat-box.red .value { color: var(--magenta); }
 .stat-box.green .value { color: var(--green); }
 .stat-box.blue .value { color: var(--blue); }
 .stat-box.orange .value { color: var(--orange); }
@@ -164,9 +295,18 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: var(--radius-sm); padding: 12px 6px;
   text-align: center; cursor: pointer; transition: all .15s;
   font-size: 11px; color: var(--text-dim);
+  font-family: var(--font-mono); letter-spacing: 0.2px;
 }
-.quick-btn .qicon { font-size: 20px; margin-bottom: 4px; }
-.quick-btn.active { border-color: var(--red); color: var(--text); background: rgba(255,0,50,.06); }
+.quick-btn .qicon {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 4px; width: 24px; height: 24px;
+}
+.quick-btn .qicon svg { width: 20px; height: 20px; }
+.quick-btn.active {
+  border-color: var(--cyan); color: var(--cyan);
+  background: var(--cyan-subtle);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+}
 .quick-btn:active { transform: scale(.95); }
 
 /* -- Fan curve canvas -- */
@@ -175,6 +315,7 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
   touch-action: none;
+  box-shadow: inset 0 0 30px rgba(0, 240, 255, 0.03);
 }
 .fan-canvas-wrap canvas { width: 100%; height: 100%; display: block; }
 
@@ -184,8 +325,13 @@ input[type=range]::-webkit-slider-thumb {
   flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius-sm); cursor: pointer; transition: all .15s;
+  font-family: var(--font-mono); letter-spacing: 0.5px;
 }
-.fan-tab.active { border-color: var(--red); color: var(--red); background: rgba(255,0,50,.06); }
+.fan-tab.active {
+  border-color: var(--cyan); color: var(--cyan);
+  background: var(--cyan-subtle);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+}
 
 /* -- Controller SVG area -- */
 .controller-wrap {
@@ -199,57 +345,88 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 10px 12px;
   display: flex; align-items: center; gap: 10px; cursor: pointer;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
-.btn-map-item:active { border-color: var(--red); }
+.btn-map-item:active {
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
 .btn-map-item .btn-icon {
   width: 32px; height: 32px; border-radius: 6px;
   background: var(--bg-input); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
   font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0;
 }
 .btn-map-item .btn-label { font-size: 12px; color: var(--text-dim); }
-.btn-map-item .btn-action { font-size: 13px; font-weight: 500; }
+.btn-map-item .btn-action { font-size: 13px; font-weight: 500; font-family: var(--font-mono); }
 
 /* -- Battery gauge -- */
 .battery-gauge {
   width: 100%; height: 32px; background: var(--bg-input);
-  border-radius: 16px; overflow: hidden; position: relative; margin-bottom: 8px;
+  border-radius: 4px; overflow: hidden; position: relative; margin-bottom: 8px;
+  border: 1px solid var(--border);
 }
 .battery-gauge-fill {
-  height: 100%; border-radius: 16px;
-  background: linear-gradient(90deg, var(--green), var(--yellow));
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--cyan-dim), var(--cyan), var(--green));
   transition: width .6s ease;
+  box-shadow: 0 0 12px var(--cyan-glow);
+  position: relative;
+}
+.battery-gauge-fill::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 8px,
+    rgba(0,0,0,0.15) 8px,
+    rgba(0,0,0,0.15) 10px
+  );
 }
 .battery-gauge-text {
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%);
-  font-size: 13px; font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 700;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+  z-index: 1;
 }
 
 /* -- Section headers -- */
 .section-head {
   font-size: 16px; font-weight: 700; margin: 20px 0 12px;
   display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  text-shadow: 0 0 8px var(--cyan-glow);
 }
 .section-head:first-child { margin-top: 0; }
+.section-head svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 /* -- Option rows (radio-like) -- */
 .opt-row {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 8px;
   display: flex; align-items: center; justify-content: space-between;
-  cursor: pointer; transition: border-color .15s;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
 }
-.opt-row.active { border-color: var(--red); }
+.opt-row.active {
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.08);
+}
 .opt-row .dot {
   width: 18px; height: 18px; border-radius: 50%;
   border: 2px solid var(--text-dim); flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s;
 }
-.opt-row.active .dot { border-color: var(--red); }
+.opt-row.active .dot { border-color: var(--cyan); }
 .opt-row.active .dot::after {
   content: ''; width: 10px; height: 10px;
-  border-radius: 50%; background: var(--red);
+  border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan-glow);
 }
 
 /* -- Color profile circles -- */
@@ -259,7 +436,11 @@ input[type=range]::-webkit-slider-thumb {
   border: 2px solid var(--border); cursor: pointer;
   transition: border-color .15s, transform .15s;
 }
-.color-dot.active { border-color: white; transform: scale(1.15); }
+.color-dot.active {
+  border-color: var(--cyan);
+  transform: scale(1.15);
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
 
 /* -- Overlay position grid -- */
 .pos-grid {
@@ -271,37 +452,77 @@ input[type=range]::-webkit-slider-thumb {
   border: 1px solid var(--border); border-radius: 4px;
   cursor: pointer; transition: all .15s;
 }
-.pos-cell.active { border-color: var(--red); background: rgba(255,0,50,.15); }
+.pos-cell.active {
+  border-color: var(--cyan);
+  background: var(--cyan-subtle);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+}
 
 /* -- Charge limit chips -- */
 .charge-chips { display: flex; gap: 8px; }
 .charge-chip {
-  flex: 1; padding: 14px; text-align: center; font-size: 15px; font-weight: 700;
-  background: var(--bg-card); border: 2px solid var(--border);
+  flex: 1; padding: 14px; text-align: center;
+  font-family: var(--font-mono);
+  font-size: 15px; font-weight: 700;
+  background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); cursor: pointer; transition: all .2s;
 }
-.charge-chip.active { border-color: var(--red); color: var(--red); background: rgba(255,0,50,.08); }
+.charge-chip.active {
+  border-color: var(--cyan); color: var(--cyan);
+  background: var(--cyan-subtle);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.12);
+  text-shadow: 0 0 6px var(--cyan-glow);
+}
 
 /* -- Top header bar -- */
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 4px 0 12px;
 }
-.top-bar h1 { font-size: 20px; font-weight: 700; }
+.top-bar h1 {
+  font-family: var(--font-mono);
+  font-size: 20px; font-weight: 700;
+  color: var(--cyan);
+  text-shadow: 0 0 10px var(--cyan-glow);
+  letter-spacing: 1px;
+}
 .top-bar .rog-badge {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--red); padding: 4px 10px;
-  border: 1px solid var(--red); border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--magenta); padding: 5px 12px;
+  border: 1px solid var(--magenta);
+  border-radius: 3px;
+  box-shadow: 0 0 10px var(--magenta-glow), inset 0 0 8px rgba(255, 0, 170, 0.08);
+  text-shadow: 0 0 6px var(--magenta-glow);
+  position: relative;
 }
 
 /* -- Profile tabs -- */
 .profile-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .profile-tab {
   padding: 8px 16px; font-size: 12px; font-weight: 600;
+  font-family: var(--font-mono);
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 20px; cursor: pointer; transition: all .15s;
 }
-.profile-tab.active { background: var(--red); border-color: var(--red); color: white; }
+.profile-tab.active {
+  background: linear-gradient(135deg, var(--cyan-dim), var(--cyan));
+  border-color: var(--cyan); color: #0a0a1a;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+/* -- Inline SVG icon helpers -- */
+.icon svg, .qicon svg, .section-head svg {
+  stroke: currentColor; fill: none;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* -- Neon focus glow for gamepad nav -- */
+[data-gp-focus] {
+  outline: 2px solid var(--cyan) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 12px var(--cyan-glow) !important;
+}
 
 /* -- Responsive -- */
 @media (min-width: 900px) {
@@ -324,15 +545,15 @@ input[type=range]::-webkit-slider-thumb {
 <!-- ----- HOME / DASHBOARD ----- -->
 <div class="page active" id="page-home">
   <div class="top-bar">
-    <h1>ROG Ally X</h1>
+    <h1>ROG ALLY X</h1>
     <div class="rog-badge">Republic of Gamers</div>
   </div>
 
   <div class="mode-bar" id="homeModebar">
-    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon">&#x1F92B;</div>Senyap</div>
-    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon">&#x2696;&#xFE0F;</div>Seimbang</div>
-    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon">&#x1F680;</div>Turbo</div>
-    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon">&#x1F527;</div>Manual</div>
+    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 00-12 0c0 4-2 6-2 6h16s-2-2-2-6"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23" stroke-opacity="0.6"/></svg></div>Senyap</div>
+    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="4 10 12 6 20 10"/><polyline points="4 14 12 18 20 14"/></svg></div>Seimbang</div>
+    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><polygon points="12 2 4 12 10 12 8 22 20 10 14 10 16 2"/></svg></div>Turbo</div>
+    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>Manual</div>
   </div>
 
   <div class="stats-grid">
@@ -343,13 +564,13 @@ input[type=range]::-webkit-slider-thumb {
   </div>
 
   <div class="quick-actions">
-    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon">&#x1F4CA;</div>Overlay</div>
-    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F319;</div>Eco GPU</div>
-    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon">&#x1F4A1;</div>120Hz</div>
-    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F506;</div>HDR</div>
-    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F3AE;</div>Auto TDP</div>
-    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F512;</div>FnLock</div>
-    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x2708;&#xFE0F;</div>Wifi Off</div>
+    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg></div>Overlay</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg></div>Eco GPU</div>
+    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg></div>120Hz</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>HDR</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M15 9l2 1.5L15 12"/><path d="M19 9l-2 1.5L19 12"/></svg></div>Auto TDP</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>FnLock</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon"><svg viewBox="0 0 24 24"><path d="M2 12l9-9v5c0 0 9 1 11 9-2-4-6-5-11-5v5l-9-9z" stroke-linejoin="round"/><line x1="17" y1="3" x2="22" y2="3" stroke-opacity="0.5"/></svg></div>Wifi Off</div>
   </div>
 
   <div class="card">
@@ -357,11 +578,11 @@ input[type=range]::-webkit-slider-thumb {
     <div class="battery-gauge"><div class="battery-gauge-fill" id="homeBatFill" style="width:0%"></div><div class="battery-gauge-text" id="homeBatText">--</div></div>
     <div class="card-row">
       <span style="font-size:13px;color:var(--text-dim)">Batas pengisian</span>
-      <span style="font-size:13px;font-weight:600;color:var(--green)" id="homeBatLimit">80%</span>
+      <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--green);text-shadow:0 0 4px var(--green-glow)" id="homeBatLimit">80%</span>
     </div>
     <div class="card-row">
       <span style="font-size:13px;color:var(--text-dim)">Daya masuk</span>
-      <span style="font-size:13px;font-weight:600" id="homePowerIn">--</span>
+      <span style="font-family:var(--font-mono);font-size:13px;font-weight:600" id="homePowerIn">--</span>
     </div>
   </div>
 
@@ -369,23 +590,23 @@ input[type=range]::-webkit-slider-thumb {
     <div class="card-title">Mode GPU</div>
     <div class="card-row">
       <span>Mode saat ini</span>
-      <span style="color:var(--green);font-weight:600">Standar</span>
+      <span style="font-family:var(--font-mono);color:var(--green);font-weight:600;text-shadow:0 0 4px var(--green-glow)">Standar</span>
     </div>
     <div class="card-row">
       <span>dGPU</span>
-      <span style="color:var(--text-dim)">Nonaktif (Eco)</span>
+      <span style="font-family:var(--font-mono);color:var(--text-dim)">Nonaktif (Eco)</span>
     </div>
   </div>
 </div>
 
 <!-- ----- PERFORMA ----- -->
 <div class="page" id="page-performa">
-  <div class="section-head">&#x26A1; Mode Performa</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Mode Performa</div>
   <div class="mode-bar" id="perfModebar">
-    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon">&#x1F92B;</div>Senyap</div>
-    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon">&#x2696;&#xFE0F;</div>Seimbang</div>
-    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon">&#x1F680;</div>Turbo</div>
-    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon">&#x1F527;</div>Manual</div>
+    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 00-12 0c0 4-2 6-2 6h16s-2-2-2-6"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23" stroke-opacity="0.6"/></svg></div>Senyap</div>
+    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="4 10 12 6 20 10"/><polyline points="4 14 12 18 20 14"/></svg></div>Seimbang</div>
+    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><polygon points="12 2 4 12 10 12 8 22 20 10 14 10 16 2"/></svg></div>Turbo</div>
+    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>Manual</div>
   </div>
 
   <div class="card" id="tdpCard">
@@ -416,7 +637,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
     <div class="card-row">
       <div><div style="font-weight:600">Target FPS</div><div style="font-size:12px;color:var(--text-dim)">TDP turun jika FPS stabil</div></div>
-      <span style="color:var(--red);font-weight:600">60 FPS</span>
+      <span style="font-family:var(--font-mono);color:var(--cyan);font-weight:600;text-shadow:0 0 4px var(--cyan-glow)">60 FPS</span>
     </div>
   </div>
 
@@ -431,7 +652,7 @@ input[type=range]::-webkit-slider-thumb {
 
 <!-- ----- KIPAS ----- -->
 <div class="page" id="page-kipas">
-  <div class="section-head">&#x1F300; Kurva Kipas</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><path d="M12 12c-1.5-3-4-5.5-7-6 4-1 6.5 1 7 6z"/><path d="M12 12c3-1.5 5.5-4 6-7 1 4-1 6.5-6 7z"/><path d="M12 12c1.5 3 4 5.5 7 6-4 1-6.5-1-7-6z"/><path d="M12 12c-3 1.5-5.5 4-6 7-1-4 1-6.5 6-7z"/><circle cx="12" cy="12" r="2"/></svg> Kurva Kipas</div>
 
   <div class="fan-tabs">
     <div class="fan-tab active" onclick="setFanTab(this,0)">CPU</div>
@@ -445,9 +666,9 @@ input[type=range]::-webkit-slider-thumb {
 
   <div class="card">
     <div class="card-title">Status Kipas</div>
-    <div class="card-row"><span>CPU</span><span style="font-weight:600" id="fanCpuRpm">-- RPM</span></div>
-    <div class="card-row"><span>GPU</span><span style="font-weight:600" id="fanGpuRpm">-- RPM</span></div>
-    <div class="card-row"><span>Mid</span><span style="font-weight:600" id="fanMidRpm">-- RPM</span></div>
+    <div class="card-row"><span>CPU</span><span style="font-family:var(--font-mono);font-weight:600" id="fanCpuRpm">-- RPM</span></div>
+    <div class="card-row"><span>GPU</span><span style="font-family:var(--font-mono);font-weight:600" id="fanGpuRpm">-- RPM</span></div>
+    <div class="card-row"><span>Mid</span><span style="font-family:var(--font-mono);font-weight:600" id="fanMidRpm">-- RPM</span></div>
   </div>
 
   <div class="card">
@@ -460,7 +681,7 @@ input[type=range]::-webkit-slider-thumb {
 
 <!-- ----- LAYAR ----- -->
 <div class="page" id="page-layar">
-  <div class="section-head">&#x1F5A5;&#xFE0F; Pengaturan Layar</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Pengaturan Layar</div>
 
   <div class="card">
     <div class="card-title">Refresh Rate</div>
@@ -501,7 +722,7 @@ input[type=range]::-webkit-slider-thumb {
 
 <!-- ----- KONTROLER ----- -->
 <div class="page" id="page-kontroler">
-  <div class="section-head">&#x1F3AE; Pemetaan Kontroler</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="2"/><path d="M15 9l2 1.5L15 12"/><path d="M19 9l-2 1.5L19 12"/></svg> Pemetaan Kontroler</div>
 
   <div class="profile-tabs">
     <div class="profile-tab active" data-profile="1" onclick="setProfileTab(this)">Profil 1</div>
@@ -511,66 +732,81 @@ input[type=range]::-webkit-slider-thumb {
 
   <div class="controller-wrap">
     <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+      <!-- Controller body -->
+      <defs>
+        <filter id="cGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+      </defs>
       <path d="M180,60 Q300,30 420,60 Q500,80 530,160 Q545,220 520,260 Q500,300 460,300 Q420,300 400,270 L380,240 Q360,220 300,220 Q240,220 220,240 L200,270 Q180,300 140,300 Q100,300 80,260 Q55,220 70,160 Q100,80 180,60Z" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="2"/>
+      <!-- Left stick -->
       <circle cx="190" cy="150" r="30" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
       <circle cx="190" cy="150" r="18" fill="var(--bg-card)" stroke="var(--text-muted)" stroke-width="1"/>
+      <!-- Right stick -->
       <circle cx="370" cy="200" r="30" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
       <circle cx="370" cy="200" r="18" fill="var(--bg-card)" stroke="var(--text-muted)" stroke-width="1"/>
+      <!-- D-pad -->
       <rect x="150" y="195" width="18" height="50" rx="4" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
       <rect x="134" y="211" width="50" height="18" rx="4" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
-      <circle cx="430" cy="120" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="430" y="124" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">Y</text>
-      <circle cx="460" cy="150" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="460" y="154" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">B</text>
-      <circle cx="400" cy="150" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="400" y="154" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">X</text>
-      <circle cx="430" cy="180" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="430" y="184" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">A</text>
+      <!-- Face buttons -->
+      <circle cx="430" cy="120" r="14" fill="var(--bg-input)" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="430" y="124" text-anchor="middle" fill="var(--yellow)" font-family="var(--font-mono)" font-size="11" font-weight="700">Y</text>
+      <circle cx="460" cy="150" r="14" fill="var(--bg-input)" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="460" y="154" text-anchor="middle" fill="var(--magenta)" font-family="var(--font-mono)" font-size="11" font-weight="700">B</text>
+      <circle cx="400" cy="150" r="14" fill="var(--bg-input)" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="400" y="154" text-anchor="middle" fill="var(--blue)" font-family="var(--font-mono)" font-size="11" font-weight="700">X</text>
+      <circle cx="430" cy="180" r="14" fill="var(--bg-input)" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="430" y="184" text-anchor="middle" fill="var(--green)" font-family="var(--font-mono)" font-size="11" font-weight="700">A</text>
+      <!-- Bumpers -->
       <rect x="140" y="50" width="80" height="16" rx="8" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="180" y="62" text-anchor="middle" fill="var(--text-dim)" font-size="9" font-weight="700">LB</text>
+      <text x="180" y="62" text-anchor="middle" fill="var(--text-dim)" font-family="var(--font-mono)" font-size="9" font-weight="700">LB</text>
       <rect x="380" y="50" width="80" height="16" rx="8" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="420" y="62" text-anchor="middle" fill="var(--text-dim)" font-size="9" font-weight="700">RB</text>
+      <text x="420" y="62" text-anchor="middle" fill="var(--text-dim)" font-family="var(--font-mono)" font-size="9" font-weight="700">RB</text>
+      <!-- Triggers -->
       <rect x="155" y="32" width="60" height="14" rx="7" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="185" y="43" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-weight="700">LT</text>
+      <text x="185" y="43" text-anchor="middle" fill="var(--text-dim)" font-family="var(--font-mono)" font-size="8" font-weight="700">LT</text>
       <rect x="385" y="32" width="60" height="14" rx="7" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
-      <text x="415" y="43" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-weight="700">RT</text>
+      <text x="415" y="43" text-anchor="middle" fill="var(--text-dim)" font-family="var(--font-mono)" font-size="8" font-weight="700">RT</text>
+      <!-- View / Menu -->
       <circle cx="260" cy="140" r="10" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
-      <text x="260" y="158" text-anchor="middle" fill="var(--text-muted)" font-size="8">View</text>
+      <text x="260" y="158" text-anchor="middle" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8">View</text>
       <circle cx="340" cy="140" r="10" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
-      <text x="340" y="158" text-anchor="middle" fill="var(--text-muted)" font-size="8">Menu</text>
-      <rect x="70" y="240" width="40" height="22" rx="6" fill="var(--red)" fill-opacity=".15" stroke="var(--red)" stroke-width="1.5"/>
-      <text x="90" y="255" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">M1</text>
-      <rect x="490" y="240" width="40" height="22" rx="6" fill="var(--red)" fill-opacity=".15" stroke="var(--red)" stroke-width="1.5"/>
-      <text x="510" y="255" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">M2</text>
+      <text x="340" y="158" text-anchor="middle" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8">Menu</text>
+      <!-- Back paddles -->
+      <rect x="70" y="240" width="40" height="22" rx="6" fill="rgba(0,240,255,0.08)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <text x="90" y="255" text-anchor="middle" fill="var(--cyan)" font-family="var(--font-mono)" font-size="10" font-weight="700">M1</text>
+      <rect x="490" y="240" width="40" height="22" rx="6" fill="rgba(0,240,255,0.08)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <text x="510" y="255" text-anchor="middle" fill="var(--cyan)" font-family="var(--font-mono)" font-size="10" font-weight="700">M2</text>
     </svg>
   </div>
 
   <div class="section-head" style="font-size:14px">Pemetaan Tombol</div>
   <div class="btn-map-grid">
     <div class="btn-map-item" data-btn="A" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--green)">A</div><div><div class="btn-action">A (Enter)</div><div class="btn-label">Tombol utama</div></div></div>
-    <div class="btn-map-item" data-btn="B" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--red)">B</div><div><div class="btn-action">B (Escape)</div><div class="btn-label">Kembali</div></div></div>
+    <div class="btn-map-item" data-btn="B" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--magenta)">B</div><div><div class="btn-action">B (Escape)</div><div class="btn-label">Kembali</div></div></div>
     <div class="btn-map-item" data-btn="X" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--blue)">X</div><div><div class="btn-action">X</div><div class="btn-label">Aksi sekunder</div></div></div>
     <div class="btn-map-item" data-btn="Y" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--yellow)">Y</div><div><div class="btn-action">Y</div><div class="btn-label">Aksi tersier</div></div></div>
     <div class="btn-map-item" data-btn="LB" onclick="promptMap(this)"><div class="btn-icon">LB</div><div><div class="btn-action">LB</div><div class="btn-label">Bumper kiri</div></div></div>
     <div class="btn-map-item" data-btn="RB" onclick="promptMap(this)"><div class="btn-icon">RB</div><div><div class="btn-action">RB</div><div class="btn-label">Bumper kanan</div></div></div>
     <div class="btn-map-item" data-btn="LT" onclick="promptMap(this)"><div class="btn-icon">LT</div><div><div class="btn-action">LT</div><div class="btn-label">Trigger kiri</div></div></div>
     <div class="btn-map-item" data-btn="RT" onclick="promptMap(this)"><div class="btn-icon">RT</div><div><div class="btn-action">RT</div><div class="btn-label">Trigger kanan</div></div></div>
-    <div class="btn-map-item" data-btn="M1" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(255,0,50,.15);color:var(--red)">M1</div><div><div class="btn-action">Screenshot</div><div class="btn-label">Tombol belakang kiri</div></div></div>
-    <div class="btn-map-item" data-btn="M2" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(255,0,50,.15);color:var(--red)">M2</div><div><div class="btn-action">Overlay Toggle</div><div class="btn-label">Tombol belakang kanan</div></div></div>
+    <div class="btn-map-item" data-btn="M1" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(0,240,255,0.1);color:var(--cyan)">M1</div><div><div class="btn-action">Screenshot</div><div class="btn-label">Tombol belakang kiri</div></div></div>
+    <div class="btn-map-item" data-btn="M2" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(0,240,255,0.1);color:var(--cyan)">M2</div><div><div class="btn-action">Overlay Toggle</div><div class="btn-label">Tombol belakang kanan</div></div></div>
   </div>
 </div>
 
 <!-- ----- BATERAI ----- -->
 <div class="page" id="page-baterai">
-  <div class="section-head">&#x1F50B; Baterai & Daya</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/></svg> Baterai &amp; Daya</div>
 
   <div class="card">
     <div class="card-title">Status Baterai</div>
     <div class="battery-gauge"><div class="battery-gauge-fill" id="batFill" style="width:0%"></div><div class="battery-gauge-text" id="batText">--</div></div>
-    <div class="card-row"><span>Kesehatan baterai</span><span style="color:var(--green);font-weight:600" id="batHealth">--%</span></div>
-    <div class="card-row"><span>Kapasitas</span><span style="font-weight:600" id="batWh">-- Wh</span></div>
-    <div class="card-row"><span>Daya masuk</span><span style="font-weight:600" id="batPower">--</span></div>
-    <div class="card-row"><span>Suhu baterai</span><span style="font-weight:600" id="batTemp">--&#176;C</span></div>
+    <div class="card-row"><span>Kesehatan baterai</span><span style="font-family:var(--font-mono);color:var(--green);font-weight:600;text-shadow:0 0 4px var(--green-glow)" id="batHealth">--%</span></div>
+    <div class="card-row"><span>Kapasitas</span><span style="font-family:var(--font-mono);font-weight:600" id="batWh">-- Wh</span></div>
+    <div class="card-row"><span>Daya masuk</span><span style="font-family:var(--font-mono);font-weight:600" id="batPower">--</span></div>
+    <div class="card-row"><span>Suhu baterai</span><span style="font-family:var(--font-mono);font-weight:600" id="batTemp">--&#176;C</span></div>
   </div>
 
   <div class="card">
@@ -600,7 +836,7 @@ input[type=range]::-webkit-slider-thumb {
 
 <!-- ----- OVERLAY ----- -->
 <div class="page" id="page-overlay">
-  <div class="section-head">&#x1F4CA; Overlay Performa</div>
+  <div class="section-head"><svg viewBox="0 0 24 24"><rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg> Overlay Performa</div>
 
   <div class="card">
     <div class="card-row">
@@ -810,8 +1046,9 @@ function onTdpChange() {
 
 // -- Controller button mapping --
 function promptMap(el) {
-  el.style.borderColor = 'var(--red)';
-  setTimeout(() => el.style.borderColor = '', 600);
+  el.style.borderColor = 'var(--cyan)';
+  el.style.boxShadow = '0 0 12px rgba(0,240,255,0.3)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 600);
   // ponytail: real impl would show a mapping dialog
 }
 
@@ -867,7 +1104,8 @@ function drawFan() {
   const {w, h, pad, gw, gh} = fc;
   ctx.clearRect(0, 0, w, h);
 
-  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  // HUD-style grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
   ctx.lineWidth = 1;
   for (let t = 30; t <= 100; t += 10) {
     const x = tToX(t, fc);
@@ -878,13 +1116,28 @@ function drawFan() {
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gw, y); ctx.stroke();
   }
 
-  ctx.fillStyle = 'rgba(255,255,255,.3)';
-  ctx.font = '10px system-ui';
+  // Crosshair corners for HUD feel
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+  ctx.lineWidth = 1.5;
+  const cLen = 8;
+  // Top-left
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t + cLen); ctx.lineTo(pad.l, pad.t); ctx.lineTo(pad.l + cLen, pad.t); ctx.stroke();
+  // Top-right
+  ctx.beginPath(); ctx.moveTo(pad.l + gw - cLen, pad.t); ctx.lineTo(pad.l + gw, pad.t); ctx.lineTo(pad.l + gw, pad.t + cLen); ctx.stroke();
+  // Bottom-left
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t + gh - cLen); ctx.lineTo(pad.l, pad.t + gh); ctx.lineTo(pad.l + cLen, pad.t + gh); ctx.stroke();
+  // Bottom-right
+  ctx.beginPath(); ctx.moveTo(pad.l + gw - cLen, pad.t + gh); ctx.lineTo(pad.l + gw, pad.t + gh); ctx.lineTo(pad.l + gw, pad.t + gh - cLen); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+  ctx.font = '10px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   for (let t = 30; t <= 100; t += 10) ctx.fillText(t + '°', tToX(t, fc), pad.t + gh + 14);
   ctx.textAlign = 'right';
   for (let p = 0; p <= 100; p += 20) ctx.fillText(p + '%', pad.l - 6, pToY(p, fc) + 4);
 
+  // Fill area
   const pts = fanData[activeFan];
   ctx.beginPath();
   ctx.moveTo(tToX(pts[0].t, fc), pToY(pts[0].p, fc));
@@ -893,24 +1146,32 @@ function drawFan() {
   ctx.lineTo(tToX(pts[0].t, fc), pad.t + gh);
   ctx.closePath();
   const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gh);
-  grad.addColorStop(0, 'rgba(255,0,50,.25)');
-  grad.addColorStop(1, 'rgba(255,0,50,.02)');
+  grad.addColorStop(0, 'rgba(0, 240, 255, 0.2)');
+  grad.addColorStop(1, 'rgba(0, 240, 255, 0.01)');
   ctx.fillStyle = grad;
   ctx.fill();
 
+  // Curve line
   ctx.beginPath();
   ctx.moveTo(tToX(pts[0].t, fc), pToY(pts[0].p, fc));
   for (let i = 1; i < pts.length; i++) ctx.lineTo(tToX(pts[i].t, fc), pToY(pts[i].p, fc));
-  ctx.strokeStyle = '#FF0032';
+  ctx.strokeStyle = '#00f0ff';
   ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 8;
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
+  // Points
   pts.forEach((pt, i) => {
     const x = tToX(pt.t, fc), y = pToY(pt.p, fc);
     ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
-    ctx.fillStyle = i === dragIdx ? '#fff' : '#FF0032';
+    ctx.fillStyle = i === dragIdx ? '#fff' : '#00f0ff';
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = i === dragIdx ? 12 : 6;
     ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -1015,11 +1276,12 @@ function highlightFocus() {
   document.querySelectorAll('[data-gp-focus]').forEach(el => {
     el.removeAttribute('data-gp-focus');
     el.style.outline = '';
+    el.style.boxShadow = '';
   });
   const items = getFocusables();
   if (focusIdx >= 0 && focusIdx < items.length) {
     items[focusIdx].setAttribute('data-gp-focus', '1');
-    items[focusIdx].style.outline = '2px solid var(--red)';
+    items[focusIdx].style.outline = '2px solid var(--cyan)';
     items[focusIdx].style.outlineOffset = '2px';
     items[focusIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
