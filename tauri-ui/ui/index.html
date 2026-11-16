@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ROG Ally Controller</title>
+<style>
+/* -- Reset & Base -- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  color-scheme: dark;
+  --red: #FF0032;
+  --red-dim: #CC0028;
+  --red-glow: rgba(255, 0, 50, 0.3);
+  --bg-deep: #0A0A0F;
+  --bg-card: #14141E;
+  --bg-card-hover: #1A1A28;
+  --bg-surface: #1C1C2A;
+  --bg-input: #22223A;
+  --text: #E8E8F0;
+  --text-dim: #8888A0;
+  --text-muted: #555570;
+  --border: #2A2A40;
+  --green: #00E676;
+  --yellow: #FFD600;
+  --orange: #FF9100;
+  --blue: #448AFF;
+  --cyan: #18FFFF;
+  --nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-deep); color: var(--text);
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* -- Scrollable page area -- */
+.page-container {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px 20px calc(var(--nav-h) + var(--safe-bottom) + 16px);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.page { display: none; animation: fadeIn .2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* -- Bottom nav -- */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-block-end: var(--safe-bottom);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(to top, #0D0D14 60%, rgba(13,13,20,.92));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+}
+nav button {
+  background: none; border: none; color: var(--text-dim);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 10px; padding: 6px 12px; border-radius: 8px;
+  transition: color .15s, background .15s; cursor: pointer;
+  min-width: 56px;
+}
+nav button svg { width: 22px; height: 22px; }
+nav button.active { color: var(--red); }
+nav button.active svg { filter: drop-shadow(0 0 6px var(--red-glow)); }
+nav button:active { background: rgba(255,255,255,.05); }
+
+/* -- Cards -- */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  transition: border-color .15s;
+}
+.card:active { border-color: var(--red); }
+.card-title {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-dim); margin-bottom: 12px;
+}
+.card-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0;
+}
+.card-row + .card-row { border-top: 1px solid rgba(255,255,255,.04); }
+
+/* -- Mode chips -- */
+.mode-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.mode-chip {
+  flex: 1; padding: 14px 8px; border-radius: var(--radius);
+  background: var(--bg-card); border: 2px solid var(--border);
+  text-align: center; cursor: pointer; transition: all .2s;
+  font-size: 13px; font-weight: 600;
+}
+.mode-chip .icon { font-size: 22px; margin-bottom: 4px; }
+.mode-chip.active {
+  border-color: var(--red); background: rgba(255,0,50,.08);
+  box-shadow: 0 0 20px var(--red-glow);
+}
+.mode-chip:active { transform: scale(.96); }
+
+/* -- Toggles -- */
+.toggle {
+  width: 48px; height: 28px; border-radius: 14px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  position: relative; cursor: pointer; transition: background .2s, border-color .2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--red); border-color: var(--red); }
+.toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: white; transition: transform .2s;
+}
+.toggle.on::after { transform: translateX(20px); }
+
+/* -- Sliders -- */
+.slider-wrap { width: 100%; }
+.slider-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.slider-label span:last-child { color: var(--red); font-weight: 600; font-variant-numeric: tabular-nums; }
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 6px;
+  border-radius: 3px; background: var(--bg-input); outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--red); cursor: pointer;
+  border: 2px solid white; box-shadow: 0 0 8px var(--red-glow);
+}
+
+/* -- Stat boxes (dashboard) -- */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; text-align: center;
+}
+.stat-box .value {
+  font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.stat-box .label { font-size: 11px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+.stat-box.red .value { color: var(--red); }
+.stat-box.green .value { color: var(--green); }
+.stat-box.blue .value { color: var(--blue); }
+.stat-box.orange .value { color: var(--orange); }
+.stat-box.cyan .value { color: var(--cyan); }
+
+/* -- Quick-action buttons -- */
+.quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.quick-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 6px;
+  text-align: center; cursor: pointer; transition: all .15s;
+  font-size: 11px; color: var(--text-dim);
+}
+.quick-btn .qicon { font-size: 20px; margin-bottom: 4px; }
+.quick-btn.active { border-color: var(--red); color: var(--text); background: rgba(255,0,50,.06); }
+.quick-btn:active { transform: scale(.95); }
+
+/* -- Fan curve canvas -- */
+.fan-canvas-wrap {
+  position: relative; width: 100%; aspect-ratio: 16/9;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+  touch-action: none;
+}
+.fan-canvas-wrap canvas { width: 100%; height: 100%; display: block; }
+
+/* -- Fan selector tabs -- */
+.fan-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.fan-tab {
+  flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; transition: all .15s;
+}
+.fan-tab.active { border-color: var(--red); color: var(--red); background: rgba(255,0,50,.06); }
+
+/* -- Controller SVG area -- */
+.controller-wrap {
+  position: relative; width: 100%; max-width: 600px; margin: 0 auto 16px;
+}
+.controller-wrap svg { width: 100%; height: auto; }
+
+/* -- Button mapping list -- */
+.btn-map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-map-item {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  transition: border-color .15s;
+}
+.btn-map-item:active { border-color: var(--red); }
+.btn-map-item .btn-icon {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--bg-input); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0;
+}
+.btn-map-item .btn-label { font-size: 12px; color: var(--text-dim); }
+.btn-map-item .btn-action { font-size: 13px; font-weight: 500; }
+
+/* -- Battery gauge -- */
+.battery-gauge {
+  width: 100%; height: 32px; background: var(--bg-input);
+  border-radius: 16px; overflow: hidden; position: relative; margin-bottom: 8px;
+}
+.battery-gauge-fill {
+  height: 100%; border-radius: 16px;
+  background: linear-gradient(90deg, var(--green), var(--yellow));
+  transition: width .6s ease;
+}
+.battery-gauge-text {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 13px; font-weight: 700;
+}
+
+/* -- Section headers -- */
+.section-head {
+  font-size: 16px; font-weight: 700; margin: 20px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-head:first-child { margin-top: 0; }
+
+/* -- Option rows (radio-like) -- */
+.opt-row {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: border-color .15s;
+}
+.opt-row.active { border-color: var(--red); }
+.opt-row .dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--text-dim); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.opt-row.active .dot { border-color: var(--red); }
+.opt-row.active .dot::after {
+  content: ''; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--red);
+}
+
+/* -- Color profile circles -- */
+.color-profiles { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-dot {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--border); cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.color-dot.active { border-color: white; transform: scale(1.15); }
+
+/* -- Overlay position grid -- */
+.pos-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
+  gap: 6px; width: 180px;
+}
+.pos-cell {
+  aspect-ratio: 16/9; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; transition: all .15s;
+}
+.pos-cell.active { border-color: var(--red); background: rgba(255,0,50,.15); }
+
+/* -- Charge limit chips -- */
+.charge-chips { display: flex; gap: 8px; }
+.charge-chip {
+  flex: 1; padding: 14px; text-align: center; font-size: 15px; font-weight: 700;
+  background: var(--bg-card); border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: all .2s;
+}
+.charge-chip.active { border-color: var(--red); color: var(--red); background: rgba(255,0,50,.08); }
+
+/* -- Top header bar -- */
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 0 12px;
+}
+.top-bar h1 { font-size: 20px; font-weight: 700; }
+.top-bar .rog-badge {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--red); padding: 4px 10px;
+  border: 1px solid var(--red); border-radius: 4px;
+}
+
+/* -- Profile tabs -- */
+.profile-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.profile-tab {
+  padding: 8px 16px; font-size: 12px; font-weight: 600;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; cursor: pointer; transition: all .15s;
+}
+.profile-tab.active { background: var(--red); border-color: var(--red); color: white; }
+
+/* -- Responsive -- */
+@media (min-width: 900px) {
+  .page-container { padding: 20px 32px calc(var(--nav-h) + 20px); }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .quick-actions { grid-template-columns: repeat(7, 1fr); }
+  .btn-map-grid { grid-template-columns: repeat(3, 1fr); }
+  nav button { font-size: 11px; min-width: 72px; }
+}
+@media (max-width: 600px) {
+  .quick-actions { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- =============== PAGE CONTAINER =============== -->
+<div class="page-container" id="pageContainer">
+
+<!-- ----- HOME / DASHBOARD ----- -->
+<div class="page active" id="page-home">
+  <div class="top-bar">
+    <h1>ROG Ally X</h1>
+    <div class="rog-badge">Republic of Gamers</div>
+  </div>
+
+  <div class="mode-bar" id="homeModebar">
+    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon">&#x1F92B;</div>Senyap</div>
+    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon">&#x2696;&#xFE0F;</div>Seimbang</div>
+    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon">&#x1F680;</div>Turbo</div>
+    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon">&#x1F527;</div>Manual</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box red"><div class="value" id="cpuTemp">--&#176;</div><div class="label">CPU</div></div>
+    <div class="stat-box orange"><div class="value" id="gpuTemp">--&#176;</div><div class="label">GPU</div></div>
+    <div class="stat-box cyan"><div class="value" id="fanRpm">--</div><div class="label">RPM Kipas</div></div>
+    <div class="stat-box green"><div class="value" id="fpsVal">--</div><div class="label">FPS</div></div>
+  </div>
+
+  <div class="quick-actions">
+    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon">&#x1F4CA;</div>Overlay</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F319;</div>Eco GPU</div>
+    <div class="quick-btn active" onclick="toggleQuick(this)"><div class="qicon">&#x1F4A1;</div>120Hz</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F506;</div>HDR</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F3AE;</div>Auto TDP</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x1F512;</div>FnLock</div>
+    <div class="quick-btn" onclick="toggleQuick(this)"><div class="qicon">&#x2708;&#xFE0F;</div>Wifi Off</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Baterai</div>
+    <div class="battery-gauge"><div class="battery-gauge-fill" id="homeBatFill" style="width:0%"></div><div class="battery-gauge-text" id="homeBatText">--</div></div>
+    <div class="card-row">
+      <span style="font-size:13px;color:var(--text-dim)">Batas pengisian</span>
+      <span style="font-size:13px;font-weight:600;color:var(--green)" id="homeBatLimit">80%</span>
+    </div>
+    <div class="card-row">
+      <span style="font-size:13px;color:var(--text-dim)">Daya masuk</span>
+      <span style="font-size:13px;font-weight:600" id="homePowerIn">--</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Mode GPU</div>
+    <div class="card-row">
+      <span>Mode saat ini</span>
+      <span style="color:var(--green);font-weight:600">Standar</span>
+    </div>
+    <div class="card-row">
+      <span>dGPU</span>
+      <span style="color:var(--text-dim)">Nonaktif (Eco)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ----- PERFORMA ----- -->
+<div class="page" id="page-performa">
+  <div class="section-head">&#x26A1; Mode Performa</div>
+  <div class="mode-bar" id="perfModebar">
+    <div class="mode-chip" data-mode="silent" onclick="setMode(this)"><div class="icon">&#x1F92B;</div>Senyap</div>
+    <div class="mode-chip active" data-mode="balanced" onclick="setMode(this)"><div class="icon">&#x2696;&#xFE0F;</div>Seimbang</div>
+    <div class="mode-chip" data-mode="turbo" onclick="setMode(this)"><div class="icon">&#x1F680;</div>Turbo</div>
+    <div class="mode-chip" data-mode="manual" onclick="setMode(this)"><div class="icon">&#x1F527;</div>Manual</div>
+  </div>
+
+  <div class="card" id="tdpCard">
+    <div class="card-title">Kontrol TDP (Mode Manual)</div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>STAPM / PPT Lambat</span><span id="stVal">15W</span></div>
+      <input type="range" min="5" max="40" value="15" id="sliderStapm" oninput="onTdpChange()">
+    </div>
+    <div class="slider-wrap" style="margin-top:12px">
+      <div class="slider-label"><span>PPT Cepat</span><span id="fpVal">25W</span></div>
+      <input type="range" min="5" max="54" value="25" id="sliderFastPpt" oninput="onTdpChange()">
+    </div>
+    <div class="slider-wrap" style="margin-top:12px">
+      <div class="slider-label"><span>PPT GPU</span><span id="gpVal">15W</span></div>
+      <input type="range" min="5" max="30" value="15" id="sliderGpuPpt" oninput="onTdpChange()">
+    </div>
+    <div class="slider-wrap" style="margin-top:12px">
+      <div class="slider-label"><span>Batas Suhu CPU</span><span id="tmVal">95&#176;C</span></div>
+      <input type="range" min="70" max="100" value="95" id="sliderTempLimit" oninput="onTdpChange()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">TDP Otomatis</div>
+    <div class="card-row">
+      <div><div style="font-weight:600">Auto TDP</div><div style="font-size:12px;color:var(--text-dim)">Sesuaikan TDP berdasarkan beban game</div></div>
+      <div class="toggle" onclick="this.classList.toggle('on'); tauriCall('set_auto_tdp',{enabled:this.classList.contains('on'),target_fps:60})"></div>
+    </div>
+    <div class="card-row">
+      <div><div style="font-weight:600">Target FPS</div><div style="font-size:12px;color:var(--text-dim)">TDP turun jika FPS stabil</div></div>
+      <span style="color:var(--red);font-weight:600">60 FPS</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Mode GPU</div>
+    <div class="opt-row active" data-gpu="eco" onclick="setGpuOpt(this)"><div><div style="font-weight:600">Eco</div><div style="font-size:12px;color:var(--text-dim)">Nonaktifkan dGPU, hemat daya</div></div><div class="dot"></div></div>
+    <div class="opt-row" data-gpu="standard" onclick="setGpuOpt(this)"><div><div style="font-weight:600">Standar</div><div style="font-size:12px;color:var(--text-dim)">Otomatis pilih GPU</div></div><div class="dot"></div></div>
+    <div class="opt-row" data-gpu="optimized" onclick="setGpuOpt(this)"><div><div style="font-weight:600">Optimized</div><div style="font-size:12px;color:var(--text-dim)">dGPU aktif saat dibutuhkan</div></div><div class="dot"></div></div>
+    <div class="opt-row" data-gpu="ultimate" onclick="setGpuOpt(this)"><div><div style="font-weight:600">Ultimate</div><div style="font-size:12px;color:var(--text-dim)">MUX langsung ke dGPU</div></div><div class="dot"></div></div>
+  </div>
+</div>
+
+<!-- ----- KIPAS ----- -->
+<div class="page" id="page-kipas">
+  <div class="section-head">&#x1F300; Kurva Kipas</div>
+
+  <div class="fan-tabs">
+    <div class="fan-tab active" onclick="setFanTab(this,0)">CPU</div>
+    <div class="fan-tab" onclick="setFanTab(this,1)">GPU</div>
+    <div class="fan-tab" onclick="setFanTab(this,2)">Mid</div>
+  </div>
+
+  <div class="fan-canvas-wrap">
+    <canvas id="fanCanvas"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Status Kipas</div>
+    <div class="card-row"><span>CPU</span><span style="font-weight:600" id="fanCpuRpm">-- RPM</span></div>
+    <div class="card-row"><span>GPU</span><span style="font-weight:600" id="fanGpuRpm">-- RPM</span></div>
+    <div class="card-row"><span>Mid</span><span style="font-weight:600" id="fanMidRpm">-- RPM</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div><div style="font-weight:600">Kurva Kustom</div><div style="font-size:12px;color:var(--text-dim)">Gunakan kurva di atas</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on'); tauriCall('set_custom_fan_enabled',{enabled:this.classList.contains('on')})"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ----- LAYAR ----- -->
+<div class="page" id="page-layar">
+  <div class="section-head">&#x1F5A5;&#xFE0F; Pengaturan Layar</div>
+
+  <div class="card">
+    <div class="card-title">Refresh Rate</div>
+    <div style="display:flex;gap:8px">
+      <div class="charge-chip" data-hz="60" onclick="setRefreshRate(this)">60Hz</div>
+      <div class="charge-chip active" data-hz="120" onclick="setRefreshRate(this)">120Hz</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tampilan</div>
+    <div class="card-row">
+      <div><div style="font-weight:600">HDR</div><div style="font-size:12px;color:var(--text-dim)">High Dynamic Range</div></div>
+      <div class="toggle" onclick="this.classList.toggle('on'); tauriCall('set_hdr',{enabled:this.classList.contains('on')})"></div>
+    </div>
+    <div class="card-row">
+      <div><div style="font-weight:600">Overdrive</div><div style="font-size:12px;color:var(--text-dim)">Kurangi ghosting panel</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on'); tauriCall('set_overdrive',{enabled:this.classList.contains('on')})"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kecerahan</div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Kecerahan Layar</span><span id="brVal">80%</span></div>
+      <input type="range" min="0" max="100" value="80" oninput="document.getElementById('brVal').textContent=this.value+'%'; tauriCallDebounced('set_brightness',{percent:+this.value})">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Profil Warna</div>
+    <div class="opt-row active" data-profile="default" onclick="setColorProfile(this)"><div style="font-weight:600">Default</div><div class="dot"></div></div>
+    <div class="opt-row" data-profile="srgb" onclick="setColorProfile(this)"><div style="font-weight:600">sRGB</div><div class="dot"></div></div>
+    <div class="opt-row" data-profile="dci-p3" onclick="setColorProfile(this)"><div style="font-weight:600">DCI-P3</div><div class="dot"></div></div>
+    <div class="opt-row" data-profile="vivid" onclick="setColorProfile(this)"><div style="font-weight:600">Vivid</div><div class="dot"></div></div>
+  </div>
+</div>
+
+<!-- ----- KONTROLER ----- -->
+<div class="page" id="page-kontroler">
+  <div class="section-head">&#x1F3AE; Pemetaan Kontroler</div>
+
+  <div class="profile-tabs">
+    <div class="profile-tab active" data-profile="1" onclick="setProfileTab(this)">Profil 1</div>
+    <div class="profile-tab" data-profile="2" onclick="setProfileTab(this)">Profil 2</div>
+    <div class="profile-tab" data-profile="3" onclick="setProfileTab(this)">Profil 3</div>
+  </div>
+
+  <div class="controller-wrap">
+    <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+      <path d="M180,60 Q300,30 420,60 Q500,80 530,160 Q545,220 520,260 Q500,300 460,300 Q420,300 400,270 L380,240 Q360,220 300,220 Q240,220 220,240 L200,270 Q180,300 140,300 Q100,300 80,260 Q55,220 70,160 Q100,80 180,60Z" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="2"/>
+      <circle cx="190" cy="150" r="30" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <circle cx="190" cy="150" r="18" fill="var(--bg-card)" stroke="var(--text-muted)" stroke-width="1"/>
+      <circle cx="370" cy="200" r="30" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <circle cx="370" cy="200" r="18" fill="var(--bg-card)" stroke="var(--text-muted)" stroke-width="1"/>
+      <rect x="150" y="195" width="18" height="50" rx="4" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
+      <rect x="134" y="211" width="50" height="18" rx="4" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
+      <circle cx="430" cy="120" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="430" y="124" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">Y</text>
+      <circle cx="460" cy="150" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="460" y="154" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">B</text>
+      <circle cx="400" cy="150" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="400" y="154" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">X</text>
+      <circle cx="430" cy="180" r="14" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="430" y="184" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-weight="700">A</text>
+      <rect x="140" y="50" width="80" height="16" rx="8" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="180" y="62" text-anchor="middle" fill="var(--text-dim)" font-size="9" font-weight="700">LB</text>
+      <rect x="380" y="50" width="80" height="16" rx="8" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="420" y="62" text-anchor="middle" fill="var(--text-dim)" font-size="9" font-weight="700">RB</text>
+      <rect x="155" y="32" width="60" height="14" rx="7" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="185" y="43" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-weight="700">LT</text>
+      <rect x="385" y="32" width="60" height="14" rx="7" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="415" y="43" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-weight="700">RT</text>
+      <circle cx="260" cy="140" r="10" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
+      <text x="260" y="158" text-anchor="middle" fill="var(--text-muted)" font-size="8">View</text>
+      <circle cx="340" cy="140" r="10" fill="var(--bg-input)" stroke="var(--border)" stroke-width="1"/>
+      <text x="340" y="158" text-anchor="middle" fill="var(--text-muted)" font-size="8">Menu</text>
+      <rect x="70" y="240" width="40" height="22" rx="6" fill="var(--red)" fill-opacity=".15" stroke="var(--red)" stroke-width="1.5"/>
+      <text x="90" y="255" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">M1</text>
+      <rect x="490" y="240" width="40" height="22" rx="6" fill="var(--red)" fill-opacity=".15" stroke="var(--red)" stroke-width="1.5"/>
+      <text x="510" y="255" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">M2</text>
+    </svg>
+  </div>
+
+  <div class="section-head" style="font-size:14px">Pemetaan Tombol</div>
+  <div class="btn-map-grid">
+    <div class="btn-map-item" data-btn="A" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--green)">A</div><div><div class="btn-action">A (Enter)</div><div class="btn-label">Tombol utama</div></div></div>
+    <div class="btn-map-item" data-btn="B" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--red)">B</div><div><div class="btn-action">B (Escape)</div><div class="btn-label">Kembali</div></div></div>
+    <div class="btn-map-item" data-btn="X" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--blue)">X</div><div><div class="btn-action">X</div><div class="btn-label">Aksi sekunder</div></div></div>
+    <div class="btn-map-item" data-btn="Y" onclick="promptMap(this)"><div class="btn-icon" style="color:var(--yellow)">Y</div><div><div class="btn-action">Y</div><div class="btn-label">Aksi tersier</div></div></div>
+    <div class="btn-map-item" data-btn="LB" onclick="promptMap(this)"><div class="btn-icon">LB</div><div><div class="btn-action">LB</div><div class="btn-label">Bumper kiri</div></div></div>
+    <div class="btn-map-item" data-btn="RB" onclick="promptMap(this)"><div class="btn-icon">RB</div><div><div class="btn-action">RB</div><div class="btn-label">Bumper kanan</div></div></div>
+    <div class="btn-map-item" data-btn="LT" onclick="promptMap(this)"><div class="btn-icon">LT</div><div><div class="btn-action">LT</div><div class="btn-label">Trigger kiri</div></div></div>
+    <div class="btn-map-item" data-btn="RT" onclick="promptMap(this)"><div class="btn-icon">RT</div><div><div class="btn-action">RT</div><div class="btn-label">Trigger kanan</div></div></div>
+    <div class="btn-map-item" data-btn="M1" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(255,0,50,.15);color:var(--red)">M1</div><div><div class="btn-action">Screenshot</div><div class="btn-label">Tombol belakang kiri</div></div></div>
+    <div class="btn-map-item" data-btn="M2" onclick="promptMap(this)"><div class="btn-icon" style="background:rgba(255,0,50,.15);color:var(--red)">M2</div><div><div class="btn-action">Overlay Toggle</div><div class="btn-label">Tombol belakang kanan</div></div></div>
+  </div>
+</div>
+
+<!-- ----- BATERAI ----- -->
+<div class="page" id="page-baterai">
+  <div class="section-head">&#x1F50B; Baterai & Daya</div>
+
+  <div class="card">
+    <div class="card-title">Status Baterai</div>
+    <div class="battery-gauge"><div class="battery-gauge-fill" id="batFill" style="width:0%"></div><div class="battery-gauge-text" id="batText">--</div></div>
+    <div class="card-row"><span>Kesehatan baterai</span><span style="color:var(--green);font-weight:600" id="batHealth">--%</span></div>
+    <div class="card-row"><span>Kapasitas</span><span style="font-weight:600" id="batWh">-- Wh</span></div>
+    <div class="card-row"><span>Daya masuk</span><span style="font-weight:600" id="batPower">--</span></div>
+    <div class="card-row"><span>Suhu baterai</span><span style="font-weight:600" id="batTemp">--&#176;C</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Batas Pengisian</div>
+    <div class="charge-chips" id="chargeLimitChips">
+      <div class="charge-chip" data-limit="60" onclick="setChargeLimit(this)">60%</div>
+      <div class="charge-chip active" data-limit="80" onclick="setChargeLimit(this)">80%</div>
+      <div class="charge-chip" data-limit="100" onclick="setChargeLimit(this)">100%</div>
+    </div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:10px">Membatasi pengisian untuk memperpanjang umur baterai.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Rencana Daya Windows</div>
+    <div class="opt-row" data-plan="power_saver" onclick="setPowerPlan(this)"><div style="font-weight:600">Hemat Daya</div><div class="dot"></div></div>
+    <div class="opt-row active" data-plan="balanced" onclick="setPowerPlan(this)"><div style="font-weight:600">Seimbang</div><div class="dot"></div></div>
+    <div class="opt-row" data-plan="high_performance" onclick="setPowerPlan(this)"><div style="font-weight:600">Performa Tinggi</div><div class="dot"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div><div style="font-weight:600">Mode Pengisi USB-C</div><div style="font-size:12px;color:var(--text-dim)">Izinkan daya dari charger USB-C pihak ketiga</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on'); tauriCall('set_usbc_charging',{enabled:this.classList.contains('on')})"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ----- OVERLAY ----- -->
+<div class="page" id="page-overlay">
+  <div class="section-head">&#x1F4CA; Overlay Performa</div>
+
+  <div class="card">
+    <div class="card-row">
+      <div><div style="font-weight:600">Tampilkan Overlay</div><div style="font-size:12px;color:var(--text-dim)">FPS, suhu, & status di layar</div></div>
+      <div class="toggle on" id="overlayToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="card-row">
+      <div><div style="font-weight:600">Hanya Saat Game</div><div style="font-size:12px;color:var(--text-dim)">Sembunyikan di desktop</div></div>
+      <div class="toggle on" id="overlayGameOnly" onclick="this.classList.toggle('on')"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Elemen yang Ditampilkan</div>
+    <div class="card-row"><span>FPS</span><div class="toggle on" data-elem="fps" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Suhu CPU</span><div class="toggle on" data-elem="cpu_temp" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Suhu GPU</span><div class="toggle on" data-elem="gpu_temp" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Kecepatan Kipas</span><div class="toggle" data-elem="fan_speed" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Baterai %</span><div class="toggle on" data-elem="battery" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Waktu Sisa Baterai</span><div class="toggle" data-elem="battery_time" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>TDP Saat Ini</span><div class="toggle" data-elem="tdp" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Frekuensi CPU/GPU</span><div class="toggle" data-elem="freq" onclick="this.classList.toggle('on')"></div></div>
+    <div class="card-row"><span>Penggunaan RAM</span><div class="toggle" data-elem="ram" onclick="this.classList.toggle('on')"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Posisi Overlay</div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="pos-grid" id="posGrid">
+        <div class="pos-cell active" data-pos="top-left" onclick="setPos(this)"></div>
+        <div class="pos-cell" data-pos="top-center" onclick="setPos(this)"></div>
+        <div class="pos-cell" data-pos="top-right" onclick="setPos(this)"></div>
+        <div class="pos-cell" data-pos="bottom-left" onclick="setPos(this)"></div>
+        <div class="pos-cell" data-pos="bottom-center" onclick="setPos(this)"></div>
+        <div class="pos-cell" data-pos="bottom-right" onclick="setPos(this)"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim)">Ketuk untuk memilih posisi overlay di layar.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ukuran & Transparansi</div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Ukuran Teks</span><span id="ovSize">14px</span></div>
+      <input type="range" min="10" max="24" value="14" id="sliderOvSize" oninput="document.getElementById('ovSize').textContent=this.value+'px'">
+    </div>
+    <div class="slider-wrap" style="margin-top:12px">
+      <div class="slider-label"><span>Transparansi Latar</span><span id="ovAlpha">70%</span></div>
+      <input type="range" min="0" max="100" value="70" id="sliderOvAlpha" oninput="document.getElementById('ovAlpha').textContent=this.value+'%'">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bilah Pengisian</div>
+    <div class="card-row">
+      <div><div style="font-weight:600">Bilah Baterai di Tepi</div><div style="font-size:12px;color:var(--text-dim)">Garis tipis di sisi layar</div></div>
+      <div class="toggle" id="edgeBar" onclick="this.classList.toggle('on')"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page-container -->
+
+<!-- =============== BOTTOM NAVIGATION =============== -->
+<nav id="bottomNav">
+  <button class="active" data-page="home" onclick="goPage('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Beranda
+  </button>
+  <button data-page="performa" onclick="goPage('performa',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    Performa
+  </button>
+  <button data-page="kipas" onclick="goPage('kipas',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c-1.5-3-4-5.5-7-6 4-1 6.5 1 7 6z"/><path d="M12 12c3-1.5 5.5-4 6-7 1 4-1 6.5-6 7z"/><path d="M12 12c1.5 3 4 5.5 7 6-4 1-6.5-1-7-6z"/><path d="M12 12c-3 1.5-5.5 4-6 7-1-4 1-6.5 6-7z"/><circle cx="12" cy="12" r="2"/></svg>
+    Kipas
+  </button>
+  <button data-page="layar" onclick="goPage('layar',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Layar
+  </button>
+  <button data-page="kontroler" onclick="goPage('kontroler',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="10" r="1"/><circle cx="18" cy="12" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="14" cy="12" r="1"/></svg>
+    Kontroler
+  </button>
+  <button data-page="baterai" onclick="goPage('baterai',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/><rect x="3" y="8" width="8" height="8" rx="1" fill="currentColor" opacity=".3"/></svg>
+    Baterai
+  </button>
+  <button data-page="overlay" onclick="goPage('overlay',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Overlay
+  </button>
+</nav>
+
+<script>
+// -- Tauri IPC bridge --
+// ponytail: works in both Tauri and plain browser
+const isTauri = !!(window.__TAURI__);
+async function tauriCall(cmd, args) {
+  if (isTauri) {
+    try { return await window.__TAURI__.core.invoke(cmd, args || {}); }
+    catch(e) { console.warn('[tauri]', cmd, e); }
+  } else {
+    console.log('[mock]', cmd, args);
+  }
+}
+
+let _debounceTimers = {};
+function tauriCallDebounced(cmd, args, delay) {
+  clearTimeout(_debounceTimers[cmd]);
+  _debounceTimers[cmd] = setTimeout(() => tauriCall(cmd, args), delay || 300);
+}
+
+// -- Navigation --
+function goPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pageContainer').scrollTop = 0;
+}
+
+// -- Mode selector sync --
+function setMode(el) {
+  const bar = el.parentElement;
+  bar.querySelectorAll('.mode-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const mode = el.dataset.mode;
+  document.querySelectorAll('.mode-bar').forEach(mb => {
+    mb.querySelectorAll('.mode-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.mode === mode);
+    });
+  });
+  tauriCall('set_performance_mode', { mode });
+}
+
+// -- Option rows (radio) --
+function setOpt(el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.opt-row').forEach(r => r.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// -- GPU mode --
+function setGpuOpt(el) {
+  setOpt(el);
+  tauriCall('set_gpu_mode', { mode: el.dataset.gpu });
+}
+
+// -- Quick toggle --
+function toggleQuick(el) { el.classList.toggle('active'); }
+
+// -- Charge limit --
+function setChargeLimit(el) {
+  el.parentElement.querySelectorAll('.charge-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  tauriCall('set_charge_limit', { percent: +el.dataset.limit });
+}
+
+// -- Refresh rate --
+function setRefreshRate(el) {
+  el.parentElement.querySelectorAll('.charge-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  tauriCall('set_refresh_rate', { hz: +el.dataset.hz });
+}
+
+// -- Color profile --
+function setColorProfile(el) {
+  setOpt(el);
+  tauriCall('set_color_profile', { profile: el.dataset.profile });
+}
+
+// -- Power plan --
+function setPowerPlan(el) {
+  setOpt(el);
+  tauriCall('set_power_plan', { plan: el.dataset.plan });
+}
+
+// -- Overlay position --
+function setPos(el) {
+  el.parentElement.querySelectorAll('.pos-cell').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// -- Profile tabs --
+function setProfileTab(el) {
+  el.parentElement.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  tauriCall('set_controller_profile', { profile: +el.dataset.profile });
+}
+
+// -- TDP sliders --
+function onTdpChange() {
+  var s = document.getElementById('sliderStapm');
+  var f = document.getElementById('sliderFastPpt');
+  var g = document.getElementById('sliderGpuPpt');
+  var t = document.getElementById('sliderTempLimit');
+  document.getElementById('stVal').textContent = s.value + 'W';
+  document.getElementById('fpVal').textContent = f.value + 'W';
+  document.getElementById('gpVal').textContent = g.value + 'W';
+  document.getElementById('tmVal').textContent = t.value + '°C';
+  tauriCallDebounced('set_tdp', {
+    stapm: +s.value, fast_ppt: +f.value, gpu_ppt: +g.value, temp_limit: +t.value
+  });
+}
+
+// -- Controller button mapping --
+function promptMap(el) {
+  el.style.borderColor = 'var(--red)';
+  setTimeout(() => el.style.borderColor = '', 600);
+  // ponytail: real impl would show a mapping dialog
+}
+
+// =============== FAN CURVE CANVAS ===============
+const fanData = [
+  [{t:30,p:0},{t:40,p:10},{t:50,p:25},{t:60,p:40},{t:70,p:60},{t:80,p:80},{t:90,p:95},{t:100,p:100}],
+  [{t:30,p:0},{t:40,p:5},{t:50,p:20},{t:60,p:35},{t:70,p:55},{t:80,p:75},{t:90,p:90},{t:100,p:100}],
+  [{t:30,p:0},{t:40,p:5},{t:50,p:15},{t:60,p:30},{t:70,p:50},{t:80,p:70},{t:90,p:85},{t:100,p:100}],
+];
+let activeFan = 0;
+let dragIdx = -1;
+const fanNames = ['cpu','gpu','mid'];
+
+function setFanTab(el, idx) {
+  el.parentElement.querySelectorAll('.fan-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeFan = idx;
+  // Load curve from backend
+  tauriCall('get_fan_curve', { fan: fanNames[idx] }).then(curve => {
+    if (curve) {
+      fanData[idx] = curve.map(p => ({t: p.temp, p: p.percent}));
+    }
+    drawFan();
+  });
+  drawFan();
+}
+
+const canvas = document.getElementById('fanCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeFanCanvas() {
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawFan();
+}
+
+function fanCoords() {
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  const pad = { l: 48, r: 16, t: 16, b: 36 };
+  return { w, h, pad, gw: w - pad.l - pad.r, gh: h - pad.t - pad.b };
+}
+
+function tToX(t, fc) { return fc.pad.l + ((t - 30) / 70) * fc.gw; }
+function pToY(p, fc) { return fc.pad.t + fc.gh - (p / 100) * fc.gh; }
+function yToP(y, fc) { return Math.round(Math.min(100, Math.max(0, ((fc.pad.t + fc.gh - y) / fc.gh) * 100))); }
+
+function drawFan() {
+  const fc = fanCoords();
+  const {w, h, pad, gw, gh} = fc;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  ctx.lineWidth = 1;
+  for (let t = 30; t <= 100; t += 10) {
+    const x = tToX(t, fc);
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gh); ctx.stroke();
+  }
+  for (let p = 0; p <= 100; p += 20) {
+    const y = pToY(p, fc);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gw, y); ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,.3)';
+  ctx.font = '10px system-ui';
+  ctx.textAlign = 'center';
+  for (let t = 30; t <= 100; t += 10) ctx.fillText(t + '°', tToX(t, fc), pad.t + gh + 14);
+  ctx.textAlign = 'right';
+  for (let p = 0; p <= 100; p += 20) ctx.fillText(p + '%', pad.l - 6, pToY(p, fc) + 4);
+
+  const pts = fanData[activeFan];
+  ctx.beginPath();
+  ctx.moveTo(tToX(pts[0].t, fc), pToY(pts[0].p, fc));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(tToX(pts[i].t, fc), pToY(pts[i].p, fc));
+  ctx.lineTo(tToX(pts[pts.length-1].t, fc), pad.t + gh);
+  ctx.lineTo(tToX(pts[0].t, fc), pad.t + gh);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gh);
+  grad.addColorStop(0, 'rgba(255,0,50,.25)');
+  grad.addColorStop(1, 'rgba(255,0,50,.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(tToX(pts[0].t, fc), pToY(pts[0].p, fc));
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(tToX(pts[i].t, fc), pToY(pts[i].p, fc));
+  ctx.strokeStyle = '#FF0032';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  pts.forEach((pt, i) => {
+    const x = tToX(pt.t, fc), y = pToY(pt.p, fc);
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = i === dragIdx ? '#fff' : '#FF0032';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function fanPointer(e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  const {x, y} = fanPointer(e);
+  const fc = fanCoords();
+  const pts = fanData[activeFan];
+  dragIdx = -1;
+  for (let i = 0; i < pts.length; i++) {
+    const px = tToX(pts[i].t, fc), py = pToY(pts[i].p, fc);
+    if (Math.hypot(x - px, y - py) < 20) { dragIdx = i; break; }
+  }
+  if (dragIdx >= 0) canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (dragIdx < 0) return;
+  const {x, y} = fanPointer(e);
+  const fc = fanCoords();
+  fanData[activeFan][dragIdx].p = yToP(y, fc);
+  drawFan();
+});
+
+canvas.addEventListener('pointerup', () => {
+  if (dragIdx >= 0) {
+    // Send updated curve to backend
+    const pts = fanData[activeFan].map(p => ({temp: p.t, percent: p.p}));
+    tauriCall('set_fan_curve', { fan: fanNames[activeFan], points: pts });
+  }
+  dragIdx = -1;
+  drawFan();
+});
+canvas.addEventListener('pointercancel', () => { dragIdx = -1; drawFan(); });
+
+window.addEventListener('resize', resizeFanCanvas);
+resizeFanCanvas();
+
+// -- Live data polling --
+async function pollSystemInfo() {
+  const info = await tauriCall('get_system_info');
+  if (!info) {
+    // Fallback mock for browser dev
+    updateStats({
+      cpu_temp: 65 + Math.round(Math.random() * 15),
+      gpu_temp: 58 + Math.round(Math.random() * 12),
+      fan_rpm_cpu: 2800 + Math.round(Math.random() * 800),
+      fan_rpm_gpu: 2400 + Math.round(Math.random() * 600),
+      fan_rpm_mid: 2000 + Math.round(Math.random() * 400),
+      fps: 55 + Math.round(Math.random() * 10),
+      battery_percent: 72, battery_health: 96, battery_wh: 80,
+      battery_temp: 38, power_input: '65W USB-C', time_remaining: '2j 15m'
+    });
+    return;
+  }
+  updateStats(info);
+}
+
+function updateStats(d) {
+  document.getElementById('cpuTemp').textContent = d.cpu_temp + '°';
+  document.getElementById('gpuTemp').textContent = d.gpu_temp + '°';
+  document.getElementById('fanRpm').textContent = d.fan_rpm_cpu;
+  document.getElementById('fpsVal').textContent = d.fps;
+  document.getElementById('fanCpuRpm').textContent = d.fan_rpm_cpu + ' RPM';
+  document.getElementById('fanGpuRpm').textContent = d.fan_rpm_gpu + ' RPM';
+  document.getElementById('fanMidRpm').textContent = d.fan_rpm_mid + ' RPM';
+  // Battery
+  var bp = d.battery_percent;
+  document.getElementById('homeBatFill').style.width = bp + '%';
+  document.getElementById('homeBatText').textContent = bp + '% — ' + d.time_remaining;
+  document.getElementById('homePowerIn').textContent = d.power_input;
+  document.getElementById('batFill').style.width = bp + '%';
+  document.getElementById('batText').textContent = bp + '% — ' + d.time_remaining + ' tersisa';
+  document.getElementById('batHealth').textContent = d.battery_health + '%';
+  document.getElementById('batWh').textContent = d.battery_wh + ' Wh';
+  document.getElementById('batPower').textContent = d.power_input;
+  document.getElementById('batTemp').textContent = d.battery_temp + '°C';
+}
+
+setInterval(pollSystemInfo, 2000);
+pollSystemInfo();
+
+// -- Gamepad navigation --
+let focusIdx = -1;
+function getFocusables() {
+  const activePage = document.querySelector('.page.active');
+  if (!activePage) return [];
+  return [...activePage.querySelectorAll(
+    '.mode-chip, .toggle, .quick-btn, .opt-row, .fan-tab, .charge-chip, .btn-map-item, .pos-cell, .profile-tab, input[type=range]'
+  )];
+}
+
+function highlightFocus() {
+  document.querySelectorAll('[data-gp-focus]').forEach(el => {
+    el.removeAttribute('data-gp-focus');
+    el.style.outline = '';
+  });
+  const items = getFocusables();
+  if (focusIdx >= 0 && focusIdx < items.length) {
+    items[focusIdx].setAttribute('data-gp-focus', '1');
+    items[focusIdx].style.outline = '2px solid var(--red)';
+    items[focusIdx].style.outlineOffset = '2px';
+    items[focusIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function pollGamepad() {
+  const gp = navigator.getGamepads ? navigator.getGamepads()[0] : null;
+  if (!gp) { requestAnimationFrame(pollGamepad); return; }
+  const items = getFocusables();
+  const up = gp.buttons[12]?.pressed || gp.axes[1] < -.5;
+  const down = gp.buttons[13]?.pressed || gp.axes[1] > .5;
+  const a = gp.buttons[0]?.pressed;
+  const b = gp.buttons[1]?.pressed;
+
+  if (down && !pollGamepad._pd) { focusIdx = Math.min(focusIdx + 1, items.length - 1); if (focusIdx < 0) focusIdx = 0; highlightFocus(); }
+  if (up && !pollGamepad._pu) { focusIdx = Math.max(focusIdx - 1, 0); highlightFocus(); }
+  if (a && !pollGamepad._pa && focusIdx >= 0 && items[focusIdx]) items[focusIdx].click();
+  if (b && !pollGamepad._pb) {
+    const homeBtn = document.querySelector('nav button[data-page="home"]');
+    if (homeBtn) { goPage('home', homeBtn); focusIdx = -1; highlightFocus(); }
+  }
+
+  const lb = gp.buttons[4]?.pressed;
+  const rb = gp.buttons[5]?.pressed;
+  const navBtns = [...document.querySelectorAll('nav button')];
+  const curNav = navBtns.findIndex(b => b.classList.contains('active'));
+  if (lb && !pollGamepad._plb && curNav > 0) { navBtns[curNav - 1].click(); focusIdx = -1; highlightFocus(); }
+  if (rb && !pollGamepad._prb && curNav < navBtns.length - 1) { navBtns[curNav + 1].click(); focusIdx = -1; highlightFocus(); }
+
+  pollGamepad._pd = down; pollGamepad._pu = up;
+  pollGamepad._pa = a; pollGamepad._pb = b;
+  pollGamepad._plb = lb; pollGamepad._prb = rb;
+  requestAnimationFrame(pollGamepad);
+}
+pollGamepad._pd = pollGamepad._pu = pollGamepad._pa = pollGamepad._pb = pollGamepad._plb = pollGamepad._prb = false;
+requestAnimationFrame(pollGamepad);
+
+// Keyboard fallback
+document.addEventListener('keydown', e => {
+  const items = getFocusables();
+  if (e.key === 'ArrowDown') { e.preventDefault(); focusIdx = Math.min(focusIdx + 1, items.length - 1); if (focusIdx < 0) focusIdx = 0; highlightFocus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); focusIdx = Math.max(focusIdx - 1, 0); highlightFocus(); }
+  if (e.key === 'Enter' && focusIdx >= 0 && items[focusIdx]) { items[focusIdx].click(); }
+  if (e.key === 'Escape') {
+    const homeBtn = document.querySelector('nav button[data-page="home"]');
+    if (homeBtn) { goPage('home', homeBtn); focusIdx = -1; highlightFocus(); }
+  }
+  const navBtns = [...document.querySelectorAll('nav button')];
+  const curNav = navBtns.findIndex(b => b.classList.contains('active'));
+  if (e.key === '[' && curNav > 0) { navBtns[curNav - 1].click(); focusIdx = -1; highlightFocus(); }
+  if (e.key === ']' && curNav < navBtns.length - 1) { navBtns[curNav + 1].click(); focusIdx = -1; highlightFocus(); }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicehash/tauri/v2/crates/tauri-cli/schema.json",
+  "identifier": "com.rogally.controller",
+  "productName": "ROG Ally Controller",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ROG Ally Controller",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "decorations": false,
+        "fullscreen": false
+      }
+    ],
+    "withGlobalTauri": true
+  }
+}

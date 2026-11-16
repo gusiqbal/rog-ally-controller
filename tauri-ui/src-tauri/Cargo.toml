@@ -1,0 +1,17 @@
+[package]
+name = "rog-ally-controller"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rand = "0.8"
+
+[target.'cfg(windows)'.dependencies]
+# ponytail: add `windows` crate when implementing real ACPI/WMI calls
+# windows = { version = "0.58", features = ["Win32_System_Wmi", "Win32_Foundation"] }
